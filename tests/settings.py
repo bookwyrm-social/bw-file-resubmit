@@ -1,3 +1,4 @@
+"""settings for tests"""
 import os
 
 BASE_DIR = os.path.dirname(__file__)

@@ -1,15 +1,18 @@
 """Set up file cache"""
+# pylint: disable=import-error
 
 from io import BytesIO
 
 from django.core.cache import caches
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
+
 def get_cache(cache_name):
     """get a cache from a name"""
     return caches[cache_name]
 
-class FileCache():
+
+class FileCache:
     """The file cache for storing files temporarily"""
 
     def __init__(self):

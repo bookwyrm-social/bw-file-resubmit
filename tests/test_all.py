@@ -1,3 +1,6 @@
+"""bw-file-submit tests"""
+# pylint: disable=import-error, too-few-public-methods, protected-access, unnecessary-pass
+
 try:
     from unittest import mock
 except ImportError:
@@ -36,33 +39,42 @@ PNG = (
 
 
 class TestForm(forms.Form):
+    """form for tests"""
+
     pass
 
 
 class OneFileForm(forms.Form):
+    """file form for tests"""
+
     name = forms.CharField(required=True)
-    upload_file = forms.FileField(widget=widgets.ResubmitBaseWidget())
+    upload_file = forms.FileField(widget=widgets.ResubmitFileWidget())
 
 
 class OneImageForm(forms.Form):
+    """image form for tests"""
+
     name = forms.CharField(required=True)
-    upload_image = forms.ImageField(widget=widgets.ResubmitBaseWidget())
+    upload_image = forms.ImageField(widget=widgets.ResubmitImageWidget())
 
 
-class BaseResubmitFileMixin(object):
-    def setUp(self):
-        self.factory = RequestFactory()
-        self.temporary_file = tempfile.NamedTemporaryFile(delete=False)
-        self.temporary_content = os.urandom(1024)
-        self.temporary_file.write(self.temporary_content)
-        self.temporary_file.close()
-        self.temporary_image = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
-        self.temporary_image.write(PNG)
-        self.temporary_image.close()
+class BaseResubmitFileMixin:
+    """mixin for testing"""
+
+    factory = RequestFactory()
+
+    with tempfile.NamedTemporaryFile(delete=False) as temporary_file:
+        temporary_content = os.urandom(1024)
+        temporary_file.write(temporary_content)
+        temporary_file.close()
+    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temporary_image:
+        temporary_image.write(PNG)
+        temporary_image.close()
 
     def get_resubmit_field(self, form, field_name):
-        resubmit_field_name = "{fn}_cache_key".format(fn=field_name)
-        name_prefix = 'name="{rfn}"'.format(rfn=resubmit_field_name)
+        """get the resubmit value of a field"""
+        resubmit_field_name = f"{field_name}_cache_key"
+        name_prefix = f'name="{resubmit_field_name}"'
         value_prefix = 'value="'
         rendered = str(form[field_name])
         self.assertIn(name_prefix, rendered)
@@ -74,25 +86,35 @@ class BaseResubmitFileMixin(object):
 
 
 class TestResubmitFileWidget(BaseResubmitFileMixin, TestCase):
+    """test cases for ResubmitFileWidget"""
+
     class DummyFormView(FormView):
+        """A form view to use in tests"""
+
         template_name = "blank.html"  # TemplateView requires this attribute
         form_class = TestForm
         success_url = "/done/"
 
     class OneFileView(DummyFormView):
+        """view for testing file uploads"""
+
         form_class = OneFileForm
 
     class OneImageView(DummyFormView):
+        """view for testing image uploads"""
+
         form_class = OneImageForm
 
     def test_file_widget(self):
+        """does the file widget work normally"""
         request = self.factory.get("/example/")
         response = self.OneFileView.as_view()(request)
         form = response.context_data["form"]
         file_field = form.fields.get("upload_file")
-        self.assertIsInstance(file_field.widget, widgets.ResubmitBaseWidget)
+        self.assertIsInstance(file_field.widget, widgets.ResubmitFileWidget)
 
     def test_file_resubmit(self):
+        """does the file widget work when re-submitting"""
         data = {}
         with open(self.temporary_file.name, "rb") as fo:
             request = self.factory.post("/example/", {"upload_file": fo})
@@ -108,13 +130,15 @@ class TestResubmitFileWidget(BaseResubmitFileMixin, TestCase):
         self.assertEqual(uploaded_file.read(), self.temporary_content)
 
     def test_image_widget(self):
+        """does the image widget work normally"""
         request = self.factory.get("/example/")
         response = self.OneImageView.as_view()(request)
         form = response.context_data["form"]
         image_field = form.fields.get("upload_image")
-        self.assertIsInstance(image_field.widget, widgets.ResubmitBaseWidget)
+        self.assertIsInstance(image_field.widget, widgets.ResubmitImageWidget)
 
     def test_image_resubmit(self):
+        """does the image widget work when resubmitting"""
         data = {}
         with open(self.temporary_image.name, "rb") as fo:
             request = self.factory.post("/example/", {"upload_image": fo})
@@ -135,10 +159,13 @@ class TestModel(models.Model):
     I skip the step of saving the model to the database
     """
 
-    def save_base(*args, **kwargs):
+    def save_base(self, *args, **kwargs):
+        """override save"""
         pass
 
     class Meta:
+        """make it abstract"""
+
         abstract = True
 
 
@@ -148,33 +175,48 @@ class TestModelAdmin(ModelAdmin):
     list page, I just return the saved object
     """
 
-    def response_add(self, request, obj, *args, **kwargs):
+    def response_add(
+        self, request, obj, *args, **kwargs
+    ):  # pylint: disable=unused-argument
+        """return saved object"""
         return obj
 
 
 class TestResubmitAdminWidget(BaseResubmitFileMixin, TestCase):
+    """test cases for Admin idgets"""
+
     class TestFileModel(TestModel):
+        """a model to test files against"""
+
         admin_name = models.CharField(max_length=100, blank=False)
         admin_upload_file = models.FileField(upload_to="fake/")
 
     class TestImageModel(TestModel):
+        """a model to test images against"""
+
         admin_name = models.CharField(max_length=100, blank=False)
         admin_upload_image = models.ImageField(upload_to="fake/")
 
     class TestFileAdmin(admin.AdminResubmitMixin, TestModelAdmin):
+        """a model to test admin files against"""
+
         pass
 
     class TestImageAdmin(admin.AdminResubmitMixin, TestModelAdmin):
+        """a model to test admin images against"""
+
         pass
 
-    def setUp(self):
-        super(TestResubmitAdminWidget, self).setUp()
-        User = get_user_model()
+    def setUp(self):  # pylint: disable=invalid-name
+        """create user for tests"""
+        super().setUp()
+        User = get_user_model()  # pylint: disable=invalid-name
         self.user = User.objects.create_superuser(
             "TestUser", "testuser@example.com", "12345678"
         )
 
     def test_file_admin(self):
+        """does AdminResubmitFileWidget work"""
         testadmin = self.TestFileAdmin(model=self.TestFileModel, admin_site=AdminSite())
         request = self.factory.get("/admin/example/")
         request.user = self.user
@@ -182,9 +224,10 @@ class TestResubmitAdminWidget(BaseResubmitFileMixin, TestCase):
         file_field = response.context_data["adminform"].form.fields.get(
             "admin_upload_file"
         )
-        self.assertIsInstance(file_field.widget, admin.ResubmitBaseWidget)
+        self.assertIsInstance(file_field.widget, admin.ResubmitFileWidget)
 
     def test_image_admin(self):
+        """does AdminResubmitImageWidget work"""
         testadmin = self.TestImageAdmin(
             model=self.TestImageModel, admin_site=AdminSite()
         )
@@ -197,6 +240,7 @@ class TestResubmitAdminWidget(BaseResubmitFileMixin, TestCase):
         self.assertIsInstance(image_field.widget, admin.AdminResubmitImageWidget)
 
     def test_image_resubmit_admin(self):
+        """test submitting image in admin views"""
         testadmin = self.TestImageAdmin(
             model=self.TestImageModel, admin_site=AdminSite()
         )
@@ -220,6 +264,7 @@ class TestResubmitAdminWidget(BaseResubmitFileMixin, TestCase):
         self.assertEqual(uploaded_image.read(), PNG)
 
     def test_file_resubmit_admin(self):
+        """test submitting file in admin views"""
         testadmin = self.TestFileAdmin(model=self.TestFileModel, admin_site=AdminSite())
         with open(self.temporary_file.name, "rb") as fo:
             request = self.factory.post("/admin/example/", {"admin_upload_file": fo})
@@ -242,6 +287,7 @@ class TestResubmitAdminWidget(BaseResubmitFileMixin, TestCase):
         self.assertEqual(uploaded_file.read(), self.temporary_content)
 
     def test_image_resubmit_save_admin(self):
+        """test resubmitting image in admin views"""
         testadmin = self.TestImageAdmin(
             model=self.TestImageModel, admin_site=AdminSite()
         )
@@ -261,11 +307,12 @@ class TestResubmitAdminWidget(BaseResubmitFileMixin, TestCase):
         setattr(resubmit_req, "_messages", messages)
         resubmit_req.user = self.user
         resubmit_req._dont_enforce_csrf_checks = True
-        saved_obj = testadmin.add_view(resubmit_req) # <=== BUG here
+        saved_obj = testadmin.add_view(resubmit_req)  # <=== BUG here
         self.assertEqual(saved_obj.admin_upload_image.read(), PNG)
-        self.assertEqual(1,1)
+        self.assertEqual(1, 1)
 
     def test_file_resubmit_save_admin(self):
+        """test resubmitting file in admin views"""
         testadmin = self.TestFileAdmin(model=self.TestFileModel, admin_site=AdminSite())
         with open(self.temporary_file.name, "rb") as fo:
             request = self.factory.post("/admin/example/", {"admin_upload_file": fo})
