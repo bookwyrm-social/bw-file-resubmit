@@ -10,15 +10,15 @@ from django.utils.safestring import mark_safe
 
 from .cache import FileCache
 
+
 class ResubmitBaseWidget(ClearableFileInput):
     def __init__(self, attrs=None, field_type=None):
         super(ResubmitBaseWidget, self).__init__(attrs=attrs)
-        self.cache_key = ''
+        self.cache_key = ""
         self.field_type = field_type
 
     def value_from_datadict(self, data, files, name):
-        upload = super(ResubmitBaseWidget, self).value_from_datadict(
-            data, files, name)
+        upload = super(ResubmitBaseWidget, self).value_from_datadict(data, files, name)
         if upload == FILE_INPUT_CONTRADICTION:
             return upload
 
@@ -40,9 +40,9 @@ class ResubmitBaseWidget(ClearableFileInput):
         return uuid.uuid4().hex
 
     def output_extra_data(self, value):
-        output = ''
+        output = ""
         if value and self.cache_key:
-            output += ' ' + self.filename_from_value(value)
+            output += " " + self.filename_from_value(value)
         if self.cache_key:
             output += forms.HiddenInput().render(
                 self.input_name,
@@ -57,8 +57,8 @@ class ResubmitBaseWidget(ClearableFileInput):
 
 
 class ResubmitFileWidget(ResubmitBaseWidget):
-    template_with_initial = getattr(ClearableFileInput, 'template_with_initial', '')
-    template_with_clear = getattr(ClearableFileInput, 'template_with_clear', '')
+    template_with_initial = getattr(ClearableFileInput, "template_with_initial", "")
+    template_with_clear = getattr(ClearableFileInput, "template_with_clear", "")
 
     def render(self, name, value, attrs=None, renderer=None, **kwargs):
         output = ClearableFileInput.render(self, name, value, attrs)

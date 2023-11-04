@@ -9,6 +9,7 @@ try:
     from django.core.cache import get_cache
 except ImportError:
     from django.core.cache import caches
+
     get_cache = lambda cache_name: caches[cache_name]
 
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -19,7 +20,7 @@ class FileCache(object):
         self.backend = self.get_backend()
 
     def get_backend(self):
-        return get_cache('file_resubmit')
+        return get_cache("file_resubmit")
 
     def set(self, key, upload):
         upload.file.seek(0)
@@ -28,7 +29,8 @@ class FileCache(object):
             "size": upload.size,
             "content_type": upload.content_type,
             "charset": upload.charset,
-            "content": upload.file.read()}
+            "content": upload.file.read(),
+        }
         upload.file.seek(0)
         self.backend.set(key, state)
 

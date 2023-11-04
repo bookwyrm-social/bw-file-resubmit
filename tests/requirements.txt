@@ -3,5 +3,4 @@ mock
 pytest
 pytest-django
 pytest-pythonpath
--e . 
-
+-e .

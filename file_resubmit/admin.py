@@ -24,8 +24,7 @@ class AdminResubmitFileWidget(ResubmitFileWidget):
 
 class AdminResubmitImageWidget(AdminResubmitBaseWidget):
     def render(self, name, value, renderer=None, attrs=None):
-        output = super(AdminResubmitImageWidget, self).render(
-            name, value, attrs)
+        output = super(AdminResubmitImageWidget, self).render(name, value, attrs)
         output += self.output_extra_data(value)
         return mark_safe(output)
 
@@ -38,4 +37,5 @@ class AdminResubmitMixin(object):
             return db_field.formfield(widget=AdminResubmitFileWidget)
         else:
             return super(AdminResubmitMixin, self).formfield_for_dbfield(
-                db_field, **kwargs)
+                db_field, **kwargs
+            )
