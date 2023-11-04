@@ -1,28 +1,26 @@
-# -*- coding: utf-8 -*-
-try:
-    from cStringIO import StringIO as BytesIO
-except ImportError:
-    from io import BytesIO
+"""Set up file cache"""
 
-# Django 1.9 removes support for django.core.cache.get_cache
-try:
-    from django.core.cache import get_cache
-except ImportError:
-    from django.core.cache import caches
+from io import BytesIO
 
-    get_cache = lambda cache_name: caches[cache_name]
-
+from django.core.cache import caches
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
+def get_cache(cache_name):
+    """get a cache from a name"""
+    return caches[cache_name]
 
-class FileCache(object):
+class FileCache():
+    """The file cache for storing files temporarily"""
+
     def __init__(self):
         self.backend = self.get_backend()
 
     def get_backend(self):
+        """get the file_resubmit cache"""
         return get_cache("file_resubmit")
 
     def set(self, key, upload):
+        """add a file to the cache"""
         upload.file.seek(0)
         state = {
             "name": upload.name,
@@ -35,6 +33,7 @@ class FileCache(object):
         self.backend.set(key, state)
 
     def get(self, key, field_name):
+        """get a file from the cache"""
         upload = None
         state = self.backend.get(key)
         if state:
@@ -52,4 +51,5 @@ class FileCache(object):
         return upload
 
     def delete(self, key):
+        """remove a file from the cache using its key"""
         self.backend.delete(key)

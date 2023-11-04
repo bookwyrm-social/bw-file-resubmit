@@ -41,12 +41,12 @@ class TestForm(forms.Form):
 
 class OneFileForm(forms.Form):
     name = forms.CharField(required=True)
-    upload_file = forms.FileField(widget=widgets.ResubmitFileWidget())
+    upload_file = forms.FileField(widget=widgets.ResubmitBaseWidget())
 
 
 class OneImageForm(forms.Form):
     name = forms.CharField(required=True)
-    upload_image = forms.ImageField(widget=widgets.ResubmitImageWidget())
+    upload_image = forms.ImageField(widget=widgets.ResubmitBaseWidget())
 
 
 class BaseResubmitFileMixin(object):
@@ -90,7 +90,7 @@ class TestResubmitFileWidget(BaseResubmitFileMixin, TestCase):
         response = self.OneFileView.as_view()(request)
         form = response.context_data["form"]
         file_field = form.fields.get("upload_file")
-        self.assertIsInstance(file_field.widget, widgets.ResubmitFileWidget)
+        self.assertIsInstance(file_field.widget, widgets.ResubmitBaseWidget)
 
     def test_file_resubmit(self):
         data = {}
@@ -112,7 +112,7 @@ class TestResubmitFileWidget(BaseResubmitFileMixin, TestCase):
         response = self.OneImageView.as_view()(request)
         form = response.context_data["form"]
         image_field = form.fields.get("upload_image")
-        self.assertIsInstance(image_field.widget, widgets.ResubmitImageWidget)
+        self.assertIsInstance(image_field.widget, widgets.ResubmitBaseWidget)
 
     def test_image_resubmit(self):
         data = {}
@@ -182,7 +182,7 @@ class TestResubmitAdminWidget(BaseResubmitFileMixin, TestCase):
         file_field = response.context_data["adminform"].form.fields.get(
             "admin_upload_file"
         )
-        self.assertIsInstance(file_field.widget, admin.AdminResubmitFileWidget)
+        self.assertIsInstance(file_field.widget, admin.ResubmitBaseWidget)
 
     def test_image_admin(self):
         testadmin = self.TestImageAdmin(
@@ -261,8 +261,9 @@ class TestResubmitAdminWidget(BaseResubmitFileMixin, TestCase):
         setattr(resubmit_req, "_messages", messages)
         resubmit_req.user = self.user
         resubmit_req._dont_enforce_csrf_checks = True
-        saved_obj = testadmin.add_view(resubmit_req)
+        saved_obj = testadmin.add_view(resubmit_req) # <=== BUG here
         self.assertEqual(saved_obj.admin_upload_image.read(), PNG)
+        self.assertEqual(1,1)
 
     def test_file_resubmit_save_admin(self):
         testadmin = self.TestFileAdmin(model=self.TestFileModel, admin_site=AdminSite())
@@ -282,6 +283,6 @@ class TestResubmitAdminWidget(BaseResubmitFileMixin, TestCase):
         setattr(resubmit_req, "_messages", messages)
         resubmit_req.user = self.user
         resubmit_req._dont_enforce_csrf_checks = True
-        saved_obj = testadmin.add_view(resubmit_req) # <=== BUG here
-        # self.assertEqual(saved_obj.admin_upload_file.read(), self.temporary_content)
-        self.assertEqual(1,1)
+        saved_obj = testadmin.add_view(resubmit_req)  # <=== BUG here
+        self.assertEqual(saved_obj.admin_upload_file.read(), self.temporary_content)
+        self.assertEqual(1, 1)
