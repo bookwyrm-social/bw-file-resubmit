@@ -1,9 +1,9 @@
 [project]
 name = "bw-file-resubmit"
-version = "0.6.0rc1"
+version = "0.6.0rc2"
 license = {text = "MIT License"}
 authors = [
-    { name="Ilya Shalyapin" },
+    { name="Ilya Shalyapin", email="ishalyapin@gmail.com"},
     { name="Hugh Rundle", email="hugh@hughrundle.net" }
 ]
 maintainers = [

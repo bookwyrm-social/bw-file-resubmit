@@ -64,8 +64,11 @@ class ResubmitFileWidget(ResubmitBaseWidget):
         self, name, value, attrs=None, **kwargs
     ):  # pylint: disable=unused-argument
         """override render function to add hidden input"""
-        output = ClearableFileInput.render(self, name, value, attrs)
-        output += self.output_extra_data(value)
+        if self.cache_key:
+            output = self.output_extra_data(value)
+        else:
+            output = ClearableFileInput.render(self, name, value, attrs)
+            output += self.output_extra_data(value)
         return mark_safe(output)
 
 
