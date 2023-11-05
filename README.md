@@ -1,21 +1,20 @@
 # bw-file-resubmit
 
-**NOTE: this repository is still being set up and the code is most probably currently broken!**
+**bw-file-resubmit** is a drop-in replacement for [**django-file-resubmit**](https://github.com/un1t/django-file-resubmit), maintained by the BookWyrm project.
 
 In a Django project you may have forms using `FileField` or `ImageField`. Everything works great, but
-when a ValidationError is raised, or you want to add some other check before finally submitting the form, you have to reselect all files and images again because HTML `<input type="file">` fields cannot be prepopulated with data due to basic browser security concerns.
+when a `ValidationError` is raised, or you want to add some other check before finally submitting the form, you have to reselect all files and images again. This is because HTML `<input type="file">` fields cannot be prepopulated with data due to basic browser security.
 
-**bw-file-resubmit** solves this problem by caching the file and adding it again in the background. It works with `FileField`, `ImageField` and `sorl.thumbnail.ImageField`.
-
-**bw-file-resubmit** is a drop-in replacement for [**django-file-resubmit**](https://github.com/un1t/django-file-resubmit), which appears to be abandoned.
+**bw-file-resubmit** solves this problem by caching the file and adding it again in the background. It works with `FileField`, `ImageField` and `sorl.thumbnail.ImageField` (see [sorl-thumbnail](https://github.com/jazzband/sorl-thumbnail)).
 
 ## How does it work?
 
 Special widgets can be used to replace `FileField` and `ImageField`. When you submit files, every widget saves its file to the cache. When a `ValidationError` is raised, the widgets restore files from cache so the user doesn't have to upload them again.
 
-## Compatible with sorl-thumbnails
-
-It is compatible with `sorl-thumbnail <https://github.com/jazzband/sorl-thumbnail>`_.
+* `ResubmitFileWidget` can be used in place of `ClearableFileInput`
+* `ResubmitImageWidget` can be used in place of `ClearableFileInput`
+* `AdminResubmitImageWidget` can be used in place of `AdminFileWidget` (Django) or `AdminImageWidget` (sorl-thumbnail)
+* `AdminResubmitMixin` will apply the appropriate widget for all `FileField`s and `ImageField`s
 
 ## Installation
 
@@ -65,7 +64,59 @@ class Page(models.Model):
     image =  ImageField(upload_to='whatever1')
 ```
 
-# Use as a model mixin
+### Form widgets
+
+#### Ordinary form
+
+forms.py
+
+```py
+from django.forms import ModelForm
+from file_resubmit.widgets import ResubmitImageWidget, ResubmitFileWidget
+from .models import Page
+
+class PageModelForm(forms.ModelForm)
+
+    class Meta:
+        model = MyModel
+        widgets = {
+            'picture': ResubmitImageWidget,
+            'file': ResubmitFileWidget,
+        }
+
+class Book(forms.Form):
+    form = PageModelForm
+
+```
+
+#### Admin form
+
+admin.py
+
+**NOTE:** `admin.AdminResubmitFileWidget` has been dropped from `bw-file-resubmit`. If you need to update a legacy `django-file-resubmit` project, use `widgets.ResubmitFileWidget` instead.
+
+```py
+from django.forms import ModelForm
+from file_resubmit.admin import AdminResubmitImageWidget,
+from file_resubmit.widgets import ResubmitFileWidget
+from .models import Page
+
+class PageModelForm(forms.ModelForm)
+
+    class Meta:
+        model = MyModel
+        widgets = {
+            'picture': AdminResubmitImageWidget,
+            'file': ResubmitFileWidget,
+        }
+
+class PageAdmin(admin.ModelAdmin):
+    form = PageModelForm
+
+admin.site.register(Page, PageAdmin)
+```
+
+### Use as a model mixin in admin
 
 admin.py
 
@@ -80,52 +131,6 @@ class PageAdmin(AdminResubmitMixin, admin.ModelAdmin):
 admin.site.register(Page, PageAdmin)
 ```
 
-## Use as a form widget
-
-admin.py
-
-```py
-from django.forms import ModelForm
-from file_resubmit.admin import AdminResubmitImageWidget, AdminResubmitFileWidget
-from .models import Page
-
-class PageModelForm(forms.ModelForm)
-
-    class Meta:
-        model = MyModel
-        widgets = {
-            'picture': AdminResubmitImageWidget,
-            'file': AdminResubmitFileWidget,
-        }
-
-class PageAdmin(admin.ModelAdmin):
-    form = PageModelForm
-
-admin.site.register(Page, PageAdmin)
-```
-
-
 # Licensing
 
 `bw-file-resubmit` is free software under terms of the MIT License
-
-**Copyright (C) 2011-2023 Ilya Shalyapin**, ishalyapin@gmail.com
-**Copyright (C) 2023- BookWyrm contributors**
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.

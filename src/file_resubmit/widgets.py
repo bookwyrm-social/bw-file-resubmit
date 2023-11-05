@@ -1,4 +1,5 @@
 """Widgets to use in form fields"""
+# pylint: disable=import-error
 import os
 import uuid
 
@@ -13,14 +14,11 @@ from .cache import FileCache
 class ResubmitBaseWidget(ClearableFileInput):
     """base widget, based on ClearableFileInput"""
 
-    template_with_initial = getattr(ClearableFileInput, "template_with_initial", "")
-    template_with_clear = getattr(ClearableFileInput, "template_with_clear", "")
-
     def __init__(self, attrs=None, field_type=None):
         super().__init__(attrs=attrs)
-        self.cache_key = ""
         self.field_type = field_type
         self.input_name = None
+        self.cache_key = None
 
     def value_from_datadict(self, data, files, name):
         """override value_from_datadict to return the cached value instead"""
@@ -55,16 +53,35 @@ class ResubmitBaseWidget(ClearableFileInput):
             )
         return output
 
-    def render(self, name, value, attrs=None, **kwargs):
-        """override base render function to display extra data for cached files"""
-        output = ClearableFileInput.render(self, name, value, attrs)
-        output += self.output_extra_data(value)
+
+class ResubmitFileWidget(ResubmitBaseWidget):
+    """resubmit widget for files in ordinary forms"""
+
+    template_with_initial = getattr(ClearableFileInput, "template_with_initial", "")
+    template_with_clear = getattr(ClearableFileInput, "template_with_clear", "")
+
+    def render(
+        self, name, value, attrs=None, **kwargs
+    ):  # pylint: disable=unused-argument
+        """override render function to add hidden input"""
+        if self.cache_key:
+            output = self.output_extra_data(value)
+        else:
+            output = ClearableFileInput.render(self, name, value, attrs)
+            output += self.output_extra_data(value)
         return mark_safe(output)
+
+
+class ResubmitImageWidget(ResubmitFileWidget):
+    """resubmit widget for image files in ordinary forms"""
+
+    pass  # pylint: disable=unnecessary-pass
 
 
 def random_key():
     """create and return a uuid"""
     return uuid.uuid4().hex
+
 
 def filename_from_value(value):
     """get just the filename from a file value"""

@@ -1,4 +1,9 @@
-.cache
+bin
+dist
+lib
 .tox
 *.egg-info
 *.pyc
+.DS_Store
+.cache
+pyvenv.cfg
