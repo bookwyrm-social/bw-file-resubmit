@@ -18,6 +18,7 @@ class FileCache:
     def __init__(self):
         self.backend = self.get_backend()
 
+    # pylint: disable=no-self-use
     def get_backend(self):
         """get the file_resubmit cache"""
         return get_cache("file_resubmit")
