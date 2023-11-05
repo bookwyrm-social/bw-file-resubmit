@@ -20,5 +20,6 @@ jobs:
         pip install tox==4.11.3
     - name: Analysing the code with pylint
       run: |
-        tox -e pylint
+        tox -e pylint -- src
+        tox -e pylint -- tests
 
