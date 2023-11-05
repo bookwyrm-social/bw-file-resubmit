@@ -30,6 +30,7 @@ if not mock:
 
 
 # shortest possible PNG file, courtesy http://garethrees.org/2007/11/14/pngcrush/
+# pylint: disable=line-too-long
 PNG = (
     b"\x89PNG\r\n\x1a\n"
     b"\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89"
@@ -175,6 +176,7 @@ class TestModelAdmin(ModelAdmin):
     list page, I just return the saved object
     """
 
+    # pylint: disable=no-self-use
     def response_add(
         self, request, obj, *args, **kwargs
     ):  # pylint: disable=unused-argument
