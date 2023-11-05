@@ -21,4 +21,4 @@ jobs:
         pip install tox==4.11.3
     - name: Run Tests
       run: |
-        pytest
+        tox -e py39
