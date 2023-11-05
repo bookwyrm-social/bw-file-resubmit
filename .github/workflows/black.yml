@@ -20,4 +20,4 @@ jobs:
         pip install tox==4.11.3
     - name: Run Black
       run: |
-        tox -e black -- . --diff
+        tox -e black -- . --check
