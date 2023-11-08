@@ -11,6 +11,7 @@ except ImportError:
 
 import os
 import tempfile
+from unittest.mock import patch  # pylint: disable=ungrouped-imports
 
 from django import forms
 from django.contrib.admin.sites import AdminSite
@@ -307,7 +308,8 @@ class TestResubmitAdminWidget(BaseResubmitFileMixin, TestCase):
         setattr(resubmit_req, "_messages", messages)
         resubmit_req.user = self.user
         resubmit_req._dont_enforce_csrf_checks = True
-        saved_obj = testadmin.add_view(resubmit_req)  # <=== BUG here
+        with patch("django.contrib.admin.models.LogEntryManager.log_action"):
+            saved_obj = testadmin.add_view(resubmit_req)  # <=== BUG here
         self.assertEqual(saved_obj.admin_upload_image.read(), PNG)
         self.assertEqual(1, 1)
 
@@ -330,6 +332,7 @@ class TestResubmitAdminWidget(BaseResubmitFileMixin, TestCase):
         setattr(resubmit_req, "_messages", messages)
         resubmit_req.user = self.user
         resubmit_req._dont_enforce_csrf_checks = True
-        saved_obj = testadmin.add_view(resubmit_req)  # <=== BUG here
+        with patch("django.contrib.admin.models.LogEntryManager.log_action"):
+            saved_obj = testadmin.add_view(resubmit_req)  # <=== BUG here
         self.assertEqual(saved_obj.admin_upload_file.read(), self.temporary_content)
         self.assertEqual(1, 1)
